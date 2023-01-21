@@ -48,11 +48,11 @@ And copy `Lobby\language_code\WONLobby.cfg` to your game folder (the one where `
 ### Adding a new language
 
 #### Game text
-If you want to add a new game language, you will need to create a new folder in the `Game` folder and name it with the language code.
+If you want to add a new game language, you will need to create a new folder in the `Game` folder and name it with the language code (that follow IETF language tags).
 Then, you will need to copy the `EE` and `AoC` folders from an existing language folder (`en` (English) most of the time except if your new language is based on another existing one) and paste it in the new folder.
 
 #### Lobby text
-If you want to add a new lobby language, you will need to create a new folder in the `Lobby` folder and name it with the language code.
+If you want to add a new lobby language, you will need to create a new folder in the `Lobby` folder and name it with the language code (that follow IETF language tags).
 Then, you will need to copy the language folder from an existing language folder (`en` (English) most of the time except if your new language is based on another existing one) and paste it in the new folder.
 
 ### Common mistakes
@@ -60,3 +60,4 @@ Then, you will need to copy the language folder from an existing language folder
 - **Do not change the format of the file!** If you do, the game will not be able to read it and will crash.
 - **Do not use the same file for `EE` and `AoC`!** Even if the game manage to read it, some text will be missing/incorrect.
 - The text here is for Empire Earth 1 (v2 update) and Empire Earth : The Art of Conquest
+- Don't use a resolution patch when testing changes, the screen must be 1024x768 to be sure that the text can be displayed even on smaller screens.
