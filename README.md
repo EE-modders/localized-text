@@ -61,3 +61,6 @@ Then, you will need to copy the language folder from an existing language folder
 - **Do not use the same file for `EE` and `AoC`!** Even if the game manage to read it, some text will be missing/incorrect.
 - The text here is for Empire Earth 1 (v2 update) and Empire Earth : The Art of Conquest
 - Don't use a resolution patch when testing changes, the screen must be 1024x768 to be sure that the text can be displayed even on smaller screens.
+
+## License
+Consider all files under GNU General Public License v3.0 except for `Game` and `Lobby` folder where only change that diverges from the original text is under GNU General Public License v3.0.
