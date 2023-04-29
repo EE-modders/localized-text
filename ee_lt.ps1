@@ -51,35 +51,36 @@ function HelpLT()
     Write-Host ""
 }
 
-function CleanLT()
+# Create the Modded DLLs by patching the vanilla DLLs
+function BuildModLoc($VanillaPath, $ModPath)
 {
-    # clean RESFile & DLLFile
-    $CleanNb = 0
-    $Directories = Get-ChildItem "Game" -Directory
-    foreach ($Directory in $Directories)
+    # Check if vanilla DLL exists
+    if (!(Test-Path $VanillaPath\$DLLFile))
     {
-        $Products = Get-ChildItem $Directory.FullName -Directory
-        foreach ($Product in $Products)
-        {
-            $ResPath = $Product.FullName + "\" + $RESFile
-            $DllPath = $Product.FullName + "\" + $DLLFile
-            if (Test-Path $ResPath)
-            {
-                Remove-Item $ResPath -ErrorAction SilentlyContinue
-                $CleanNb++
-            }
-            if (Test-Path $DllPath)
-            {
-                Remove-Item $DllPath -ErrorAction SilentlyContinue
-                $CleanNb++
-            }
-        }
+        Write-Host "Vanilla DLL not found" -ForegroundColor Red
+        return $LT_KO
     }
-    Write-Host "Cleaned" $CleanNb "files" -ForegroundColor Green
+
+    Start-Process $RHPath -WorkingDirectory $ModPath -ArgumentList "-open $RCFile -save $RESFile -action compile -log NUL" -Wait
+    if (!(Test-Path $ModPath\$RESFile))
+    {
+        Remove-Item $ModPath\$RESFile -ErrorAction SilentlyContinue
+        Write-Host "Error compiling RC file" -ForegroundColor Red
+        return $LT_KO
+    }
+
+    Start-Process $RHPath -WorkingDirectory $ModPath -ArgumentList "-open $VanillaPath\$DLLFile -save $DLLFile -resource $RESFile -action addoverwrite -log NUL" -Wait
+    Remove-Item $ModPath\$RESFile -ErrorAction SilentlyContinue
+    if (!(Test-Path $ModPath\$DLLFile))
+    {
+        Write-Host "Error adding RES file" -ForegroundColor Red
+        return $LT_KO
+    }
+    return $LT_OK
 }
 
-# Patch the DLL
-function BuildResAndDll($Path)
+# Create the "vanilla" DLLs
+function BuildVanillaLoc($Path)
 {
     # Remove previous DLL & RES
     Remove-Item $Path\$DLLFile -ErrorAction SilentlyContinue
@@ -103,23 +104,92 @@ function BuildResAndDll($Path)
     return $LT_OK
 }
 
-function BuildLang($Path)
+function BuildLang($Lang)
 {
-    $Path = Get-Item $Path
+    
+    # Vanilla DLL
+    $Path = Get-Item "Game\$Lang"
     Write-Host "Patching Language:" $Path.Name -ForegroundColor Blue
 
     $Products = Get-ChildItem $Path.FullName -Directory
+    
     foreach ($Product in $Products)
     {
         $ProductName = $Product.Name
         Write-Host "Patching Product: $ProductName" -ForegroundColor DarkGray
-        if ((BuildResAndDll($Product.FullName)) -eq $LT_KO)
+
+        if ((BuildVanillaLoc($Product.FullName)) -eq $LT_KO)
         {
             Write-Host "Failed to patch: $ProductName" -ForegroundColor DarkRed
             return $LT_KO
         }
+        
+        # Modded DLLs
+        # Mods\MOD_NAME\Game\LANG\PRODUCT_NAME
+        $Mods = Get-ChildItem "Mods" -Directory
+
+        foreach ($Mod in $Mods)
+        {
+            $ModName = $Mod.Name
+            Write-Host "Patching Mod: $ModName" -ForegroundColor DarkGray
+            
+            $ModPath = $Mod.FullName + "\Game\" + $Lang + "\" + $ProductName
+            if (!(Test-Path $ModPath))
+            {
+                Write-Host "Mod not found: $ModPath" -ForegroundColor DarkRed
+                return $LT_KO
+            }
+            
+            if ((BuildModLoc $Product.FullName $ModPath) -eq $LT_KO)
+            {
+                Write-Host "Failed to patch: $ModName" -ForegroundColor DarkRed
+                return $LT_KO
+            }
+        }
     }
+
     return $LT_OK
+}
+
+function CleanLangs($BaseDir)
+{
+    $CleanNb = 0
+    $Directories = Get-ChildItem $BaseDir -Directory
+
+    foreach ($Directory in $Directories)
+    {
+        $Products = Get-ChildItem $Directory.FullName -Directory
+        foreach ($Product in $Products)
+        {
+            $ResPath = $Product.FullName + "\" + $RESFile
+            $DllPath = $Product.FullName + "\" + $DLLFile
+            if (Test-Path $ResPath)
+            {
+                Remove-Item $ResPath -ErrorAction SilentlyContinue
+                $CleanNb++
+            }
+            if (Test-Path $DllPath)
+            {
+                Remove-Item $DllPath -ErrorAction SilentlyContinue
+                $CleanNb++
+            }
+        }
+    }
+    return $CleanNb
+}
+
+function CleanLT()
+{
+    # clean RESFile & DLLFile
+    $CleanNb += CleanLangs "Game"
+    
+    $Mods = Get-ChildItem "Mods" -Directory
+    foreach ($Mod in $Mods)
+    {
+        $CleanNb += CleanLangs ($Mod.FullName + "\Game")
+    }
+
+    Write-Host "Cleaned" $CleanNb "files" -ForegroundColor Green
 }
 
 # Patch the DLLs
@@ -134,7 +204,7 @@ function BuildAll()
     # Loop through the directories
     foreach ($Directory in $Directories)
     {
-        if (BuildLang($Directory.FullName) -eq $LT_OK)
+        if (BuildLang($Directory.Name) -eq $LT_OK)
         {
             Write-Host "Successfully patched: $Directory" -ForegroundColor Green
         } else
@@ -170,7 +240,7 @@ if ($Arguments[0] -eq "build")
     }
     else
     {
-        if (BuildLang("Game\" + $Arguments[1])  -eq $LT_OK)
+        if (BuildLang($Arguments[1])  -eq $LT_OK)
         {
             Write-Host "Successfully patched:" $Arguments[1] -ForegroundColor Green
         } else
