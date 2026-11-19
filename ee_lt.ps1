@@ -27,7 +27,9 @@ $LT_OK = 1
 $LT_KO = 0
 
 # Edit the line bellow if your Resource Hacker is not located here:
+# Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
 $RHPath = "C:\Program Files (x86)\Resource Hacker\ResourceHacker.exe"
+# Alternative: Resource Cracker https://www.pelock.com/download/resource-cracker.exe
 
 $RCFile = "Language.rc"
 $RESFile = "Language.res"
@@ -226,8 +228,11 @@ if ($Arguments.Count -eq 0)
 if (!(Test-Path $RHPath))
 {
     Write-Host "Resource Hacker not found or path is incorrect"
+    # Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
     Write-Host "Please install Resource Hacker if you don't have it"
+    # Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
     Write-Host "http://angusj.com/resourcehacker/"
+    # Alternative: Resource Cracker https://www.pelock.com/products/resource-cracker
     Write-Host "Or edit the script and set the correct path"
     return
 }
